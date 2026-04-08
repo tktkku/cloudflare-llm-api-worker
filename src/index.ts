@@ -12,10 +12,6 @@
  */
 
 // Please install OpenAI SDK first: `npm install openai`
-
-import strict from "node:assert/strict";
-import OpenAI from "openai";
-
 export interface Env {
 	DEEPSEEK_API_KEY: string;
 }
@@ -56,24 +52,41 @@ export default {
 					}
 				});
 			}
-			const deepseek = new OpenAI({
-				baseURL: 'https://api.deepseek.com',
-				apiKey: env.DEEPSEEK_API_KEY,
-			});
-			const completion = await deepseek.chat.completions.create({
-				model: "deepseek-chat",
-				messages: [
-					{ role: "system", content: systemPrompt },
-					{ role: "user", content: message },
-				],
-			});
-			const reply = completion.choices[0]?.message?.content || "No response";
-
-			return new Response(JSON.stringify({success: true, reply}), {
+			const deepseek = await fetch("https://api.deepseek.com/chat/completions", {
+				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
-					"Access-Control-Allow-Origin": "*",
-				}
+					"Authorization": `Bearer ${env.DEEPSEEK_API_KEY}`,
+				},
+				body: JSON.stringify({
+					model: "deepseek-chat",
+					messages: [
+						{ role: "system", content: systemPrompt },
+						{ role: "user", content: message}
+					],
+					stream: true,
+				}),
+			});
+			if (!deepseek.ok) {
+				const errorText = await deepseek.text();
+				return new Response(JSON.stringify({ error: errorText}), {
+					status: deepseek.status,
+					headers: {
+						"Content-Type": "application/json",
+						"Access-Control-Allow-Origin": "*",
+					}
+				});
+			}
+			const responseHeaders = new Headers({
+				"Content-Type": "application/json",
+				"Access-Control-Allow-Origin": "*",
+				"Cache-Control": "no-cache",
+				"Connection": "keep-alive",
+			});
+
+			return new Response(deepseek.body, {
+				status: 200,
+				headers: responseHeaders,
 			});
 		} catch (error: any) {
 			console.error("Error processing request:", error);
