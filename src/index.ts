@@ -64,6 +64,9 @@ export default {
 						{ role: "system", content: systemPrompt },
 						{ role: "user", content: message}
 					],
+					temperature: 0.0,
+					max_tokens: 2048,
+					top_p: 1.0,
 					stream: true,
 				}),
 			});
