@@ -16,9 +16,9 @@ export interface Env {
 	BASE_URL: string;
 	API_KEY: string;
 	MODEL: string;
-	TEMPERATURE: number;
-	MAX_TOKENS: number;
-	TOP_P: number;
+	TEMPERATURE: string;
+	MAX_TOKENS: string;
+	TOP_P: string;
 }
 
 export default {
@@ -69,9 +69,9 @@ export default {
 						{ role: "system", content: systemPrompt },
 						{ role: "user", content: message}
 					],
-					temperature: env.TEMPERATURE,
-					max_tokens: env.MAX_TOKENS,
-					top_p: env.TOP_P,
+					temperature: Number(env.TEMPERATURE),
+					max_tokens: Number(env.MAX_TOKENS),
+					top_p: Number(env.TOP_P),
 					response_format: { type: "json_object" },
 					stream: true,
 				}),
