@@ -13,7 +13,12 @@
 
 // Please install OpenAI SDK first: `npm install openai`
 export interface Env {
-	DEEPSEEK_API_KEY: string;
+	BASE_URL: string;
+	API_KEY: string;
+	MODEL: string;
+	TEMPERATURE: number;
+	MAX_TOKENS: number;
+	TOP_P: number;
 }
 
 export default {
@@ -52,21 +57,21 @@ export default {
 					}
 				});
 			}
-			const deepseek = await fetch("https://api.deepseek.com/chat/completions", {
+			const deepseek = await fetch(env.BASE_URL, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
-					"Authorization": `Bearer ${env.DEEPSEEK_API_KEY}`,
+					"Authorization": `Bearer ${env.API_KEY}`,
 				},
 				body: JSON.stringify({
-					model: "deepseek-chat",
+					model: env.MODEL,
 					messages: [
 						{ role: "system", content: systemPrompt },
 						{ role: "user", content: message}
 					],
-					temperature: 0.0,
-					max_tokens: 2048,
-					top_p: 0.9,
+					temperature: env.TEMPERATURE,
+					max_tokens: env.MAX_TOKENS,
+					top_p: env.TOP_P,
 					response_format: { type: "json_object" },
 					stream: true,
 				}),
