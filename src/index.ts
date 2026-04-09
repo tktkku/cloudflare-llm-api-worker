@@ -65,7 +65,7 @@ export default {
 						{ role: "user", content: message}
 					],
 					temperature: 0.0,
-					max_tokens: 400,
+					max_tokens: 2048,
 					top_p: 0.9,
 					response_format: { type: "json_object" },
 					stream: true,
