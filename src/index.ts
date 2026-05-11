@@ -47,6 +47,9 @@ export default {
 				tools,
 				tool_choice,
 				stream = true,
+				model,
+				reasoning_effort,
+				thinking,
 			} = await request.json() as any;
 
 			// Build the messages array for the DeepSeek API
@@ -61,12 +64,22 @@ export default {
 			}
 
 			const body: any = {
-				model: env.MODEL,
+				model: model || env.MODEL,
 				messages: apiMessages,
 				temperature: Number(env.TEMPERATURE),
 				max_tokens: Number(env.MAX_TOKENS),
 				stream: stream,
 			};
+
+			if (thinking || reasoning_effort) {
+				body.extra_body = {};
+				if (thinking) {
+					body.extra_body.thinking = thinking;
+				}
+				if (reasoning_effort) {
+					body.reasoning_effort = reasoning_effort;
+				}
+			}
 
 			// Forward tool definitions
 			if (tools && Array.isArray(tools) && tools.length > 0) {
