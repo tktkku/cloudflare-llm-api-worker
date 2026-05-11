@@ -41,8 +41,8 @@ export default {
 
 		try {
 			const {
-				message,          // flat string (legacy)
-				messages,         // structured array (preferred for tool calls)
+				message,          // flat string (legacy, backward compat)
+				messages,         // structured array (preferred)
 				systemPrompt = "You are a helpful assistant.",
 				tools,
 				tool_choice,
@@ -55,10 +55,8 @@ export default {
 				apiMessages.push({ role: "system", content: systemPrompt });
 			}
 			if (messages && Array.isArray(messages)) {
-				// Structured messages from dart_agent_core (preferred)
 				apiMessages.push(...messages);
 			} else if (message) {
-				// Legacy flat string fallback
 				apiMessages.push({ role: "user", content: message });
 			}
 
@@ -68,10 +66,9 @@ export default {
 				temperature: Number(env.TEMPERATURE),
 				max_tokens: Number(env.MAX_TOKENS),
 				stream: stream,
-				response_format: { type: "json_object" },
 			};
 
-			// Forward tool definitions if provided
+			// Forward tool definitions
 			if (tools && Array.isArray(tools) && tools.length > 0) {
 				body.tools = tools;
 			}
