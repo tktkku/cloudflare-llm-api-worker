@@ -71,7 +71,6 @@ export default {
 					],
 					temperature: Number(env.TEMPERATURE),
 					max_tokens: Number(env.MAX_TOKENS),
-					top_p: Number(env.TOP_P),
 					response_format: { type: "json_object" },
 					stream: true,
 				}),
