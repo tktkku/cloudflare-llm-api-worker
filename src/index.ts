@@ -18,7 +18,6 @@ export interface Env {
 	MODEL: string;
 	TEMPERATURE: string;
 	MAX_TOKENS: string;
-	TOP_P: string;
 }
 
 export default {
@@ -36,74 +35,81 @@ export default {
 		if (request.method !== "POST") {
 			return new Response(JSON.stringify({error: "Method not allowed"}), {
 				status: 405,
-				headers: {
-					"Content-Type": "application/json",
-					"Access-Control-Allow-Origin": "*",
-				},
+				headers: {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
 			});
 		}
 
 		try {
-			const { message, systemPrompt = "You are a helpful assistant."} = await request.json() as {
-				message: string;
-				systemPrompt?: string;
-			};
-			if (!message) {
-				return new Response(JSON.stringify({ error: "Message is required" }), {
-					status: 400,
-					headers: {
-						"Content-Type": "application/json",
-						"Access-Control-Allow-Origin": "*",
-					}
-				});
+			const {
+				message,          // flat string (legacy)
+				messages,         // structured array (preferred for tool calls)
+				systemPrompt = "You are a helpful assistant.",
+				tools,
+				tool_choice,
+				stream = true,
+			} = await request.json() as any;
+
+			// Build the messages array for the DeepSeek API
+			const apiMessages: any[] = [];
+			if (systemPrompt) {
+				apiMessages.push({ role: "system", content: systemPrompt });
 			}
+			if (messages && Array.isArray(messages)) {
+				// Structured messages from dart_agent_core (preferred)
+				apiMessages.push(...messages);
+			} else if (message) {
+				// Legacy flat string fallback
+				apiMessages.push({ role: "user", content: message });
+			}
+
+			const body: any = {
+				model: env.MODEL,
+				messages: apiMessages,
+				temperature: Number(env.TEMPERATURE),
+				max_tokens: Number(env.MAX_TOKENS),
+				stream: stream,
+				response_format: { type: "json_object" },
+			};
+
+			// Forward tool definitions if provided
+			if (tools && Array.isArray(tools) && tools.length > 0) {
+				body.tools = tools;
+			}
+			if (tool_choice) {
+				body.tool_choice = tool_choice;
+			}
+
 			const deepseek = await fetch(env.BASE_URL, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 					"Authorization": `Bearer ${env.API_KEY}`,
 				},
-				body: JSON.stringify({
-					model: env.MODEL,
-					messages: [
-						{ role: "system", content: systemPrompt },
-						{ role: "user", content: message}
-					],
-					temperature: Number(env.TEMPERATURE),
-					max_tokens: Number(env.MAX_TOKENS),
-					response_format: { type: "json_object" },
-					stream: true,
-				}),
+				body: JSON.stringify(body),
 			});
+
 			if (!deepseek.ok) {
 				const errorText = await deepseek.text();
-				return new Response(JSON.stringify({ error: errorText}), {
+				return new Response(JSON.stringify({ error: errorText }), {
 					status: deepseek.status,
-					headers: {
-						"Content-Type": "application/json",
-						"Access-Control-Allow-Origin": "*",
-					}
+					headers: {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
 				});
 			}
-			const responseHeaders = new Headers({
-				"Content-Type": "application/json",
-				"Access-Control-Allow-Origin": "*",
-				"Cache-Control": "no-cache",
-				"Connection": "keep-alive",
-			});
 
 			return new Response(deepseek.body, {
 				status: 200,
-				headers: responseHeaders,
+				headers: {
+					"Content-Type": "application/json",
+					"Access-Control-Allow-Origin": "*",
+					"Cache-Control": "no-cache",
+					"Connection": "keep-alive",
+				},
 			});
 		} catch (error: any) {
 			console.error("Error processing request:", error);
 			return new Response(JSON.stringify({ success: false, error: error.message }), {
 				status: 500,
-				headers: {
-					"Content-Type": "application/json",
-					"Access-Control-Allow-Origin": "*",
-				}
+				headers: {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
 			});
 		}
 	}
