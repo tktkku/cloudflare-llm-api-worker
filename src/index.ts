@@ -71,14 +71,11 @@ export default {
 				stream: stream,
 			};
 
-			if (thinking || reasoning_effort) {
-				body.extra_body = {};
-				if (thinking) {
-					body.extra_body.thinking = thinking;
-				}
-				if (reasoning_effort) {
-					body.reasoning_effort = reasoning_effort;
-				}
+			if (thinking) {
+				body.thinking = thinking;
+			}
+			if (reasoning_effort) {
+				body.reasoning_effort = reasoning_effort;
 			}
 
 			// Forward tool definitions
